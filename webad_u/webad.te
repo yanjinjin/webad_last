@@ -1,0 +1,323 @@
+# ==============================================
+# Policy File of /system/bin/webad Executable File
+
+
+# ==============================================
+# Type Declaration
+# ==============================================
+type webad ,domain, mlstrustedsubject;
+type webad_exec , exec_type, file_type;
+
+
+
+# ==============================================
+# MTK Policy Rule
+# ==============================================
+
+init_daemon_domain(webad)
+net_domain(webad)
+##
+##
+##app_domain(webad)
+
+allow webad self:capability { setgid setuid net_admin net_raw net_bind_service dac_override };
+allow webad self:packet_socket create_socket_perms;
+
+allow webad fuse:dir create_dir_perms;
+allow webad fuse:file create_file_perms;
+allow webad kernel:system module_request;
+unix_socket_connect(webad, property, init)
+allow webad mtd_device:dir search;
+allow webad shell_exec:file rx_file_perms;
+allow webad zygote_exec:file rx_file_perms;
+allow webad sdcard_type:dir r_dir_perms;
+allow webad system_data_file:dir r_dir_perms;
+allow webad system_file:file rx_file_perms;
+allow webad proc:file write;
+allow webad proc_net:file write;
+
+auditallow webad net_radio_prop:property_service set;
+auditallow webad system_radio_prop:property_service set;
+
+allow webad block_device:dir search;
+allow webad platformblk_device:dir search;
+allow webad platformblk_device:blk_file { open read write };
+allow webad system_data_file:dir write;
+allow webad system_data_file:dir add_name;
+allow webad system_data_file:sock_file create;
+allow webad system_data_file:sock_file setattr;
+allow webad self:capability chown;
+allow webad system_data_file:dir remove_name;
+allow webad system_data_file:sock_file unlink;
+allow webad system_server:unix_dgram_socket sendto;
+allow webad system_data_file:sock_file write;
+allow webad misc2_device:chr_file { open read write };
+
+# Allow webad to create and use netlink sockets.
+allow webad self:netlink_socket {write getattr setopt read bind create};
+allow webad self:netlink_socket create_socket_perms;
+allow webad netdomain:{tcp_socket udp_socket rawip_socket dccp_socket tun_socket} {read write getattr setattr getopt setopt};
+allow webad netdomain:fd use;
+allow webad self:netlink_kobject_uevent_socket create_socket_perms;
+
+# Access to wake locks
+wakelock_use(webad)
+
+allow webad self:socket create_socket_perms;
+allow webad socket_device:sock_file write;
+allow webad self:{ tcp_socket udp_socket } *;
+
+allow webad untrusted_app:unix_stream_socket connectto;
+allow webad platform_app:unix_stream_socket connectto;
+allow webad init:unix_stream_socket connectto;
+allow webad system_app:unix_stream_socket connectto;
+
+allow webad untrusted_app:unix_dgram_socket sendto;
+allow untrusted_app webad:unix_dgram_socket sendto;
+
+allow webad platform_app:unix_dgram_socket sendto;
+allow platform_app webad:unix_dgram_socket sendto;
+
+
+allow webad self:netlink_route_socket { write getattr setopt read bind create nlmsg_read create_socket_perms nlmsg_write };
+
+allow webad net_data_file:file { read getattr open };
+allow webad net_data_file:dir search;
+allow webad self:rawip_socket { getopt create };
+allow webad self:udp_socket ioctl;
+
+
+r_dir_file(webad, apk_data_file)
+
+allow webad shell_data_file:dir create_dir_perms;
+allow webad shell_data_file:file create_file_perms;
+allow webad shell_data_file:file r_file_perms;
+
+allow webad system_data_file:dir create_dir_perms;
+allow webad system_data_file:file create_file_perms;
+allow webad system_data_file:file rw_file_perms;
+
+allow webad radio_data_file:dir create_dir_perms;
+allow webad radio_data_file:file create_file_perms;
+allow webad radio_data_file:file rw_file_perms;
+
+allow webad system_app_data_file:dir create_dir_perms;
+allow webad system_app_data_file:file create_file_perms;
+allow webad system_app_data_file:file rw_file_perms;
+
+allow webad apk_data_file:dir create_dir_perms;
+allow webad apk_data_file:file create_file_perms;
+allow webad apk_data_file:file rw_file_perms;
+
+allow webad sdcard_internal:dir { write create add_name };
+allow webad sdcard_internal:file { read write getattr open create };
+
+allow webad property_socket:sock_file write;
+allow webad ttyGS_device:chr_file { read write ioctl open };
+allow webad system_prop:property_service set;
+
+allow webad dnsproxyd_socket:sock_file write;
+allow webad fwmarkd_socket:sock_file write;
+allow webad netd:unix_stream_socket connectto;
+allow webad netd:netlink_kobject_uevent_socket { read write };
+allow webad netd:netlink_nflog_socket { read write };
+allow webad netd:netlink_route_socket { read write };
+allow webad netd:unix_stream_socket { read write };
+allow webad netd:unix_dgram_socket { read write };
+
+allow webad wifi_data_file:file rw_file_perms;
+allow webad wifi_data_file:dir create_dir_perms;
+type_transition webad wifi_data_file:dir wpa_socket "sockets";
+allow webad wpa_socket:dir create_dir_perms;
+allow webad wpa_socket:sock_file create_file_perms;
+allow webad netd:fd use;
+allow webad netd:udp_socket { read write };
+allow webad netd:fifo_file { read write };
+
+allow webad proc_net:file write;
+
+# Purpose : allow battery warning use AMS to send broadcast through binder call
+allow webad system_server:binder call;
+
+allow webad tmpfs:lnk_file read;
+
+allow webad exec_type:file r_file_perms;
+
+# Dalvik Compiler JIT Mapping.
+allow webad self:process execmem;
+allow webad ashmem_device:chr_file execute;
+
+# Receive and use open file descriptors inherited from zygote.
+allow webad zygote:fd use;
+
+# gdbserver for ndk-gdb reads the zygote.
+# valgrind needs mmap exec for zygote
+allow webad zygote_exec:file rx_file_perms;
+
+# gdbserver for ndk-gdb ptrace attaches to app process.
+allow webad self:process ptrace;
+
+#allow webad zygote:process ptrace;
+
+# Read system properties managed by zygote.
+allow webad zygote_tmpfs:file read;
+
+# Notify zygote of death;
+allow webad zygote:process sigchld;
+
+# Notify shell and adbd of death when spawned via runas for ndk-gdb.
+allow webad shell:process sigchld;
+allow webad adbd:process sigchld;
+
+# child shell or gdbserver pty access for runas.
+allow webad devpts:chr_file { getattr read write ioctl };
+
+# Use pipes and sockets provided by system_server via binder or local socket.
+allow webad system_server:fifo_file rw_file_perms;
+allow webad system_server:unix_stream_socket { read write setopt getattr getopt shutdown };
+allow webad system_server:tcp_socket { read write getattr getopt shutdown };
+
+# Communication with other apps via fifos
+allow webad appdomain:fifo_file rw_file_perms;
+
+# Communicate with surfaceflinger.
+allow webad surfaceflinger:unix_stream_socket { read write setopt getattr getopt shutdown };
+
+# App sandbox file accesses.
+allow webad app_data_file:dir create_dir_perms;
+allow webad app_data_file:notdevfile_class_set create_file_perms;
+
+# lib subdirectory of /data/data dir is system-owned.
+allow webad system_data_file:dir r_dir_perms;
+
+# Keychain and user-trusted credentials
+allow webad keychain_data_file:dir r_dir_perms;
+allow webad keychain_data_file:file r_file_perms;
+allow webad misc_user_data_file:dir r_dir_perms;
+allow webad misc_user_data_file:file r_file_perms;
+
+# Access to OEM provided data and apps
+
+
+# Execute dex2oat when apps call dexclassloader
+allow webad dex2oat_exec:file rx_file_perms;
+
+# Read/write wallpaper file (opened by system).
+allow webad wallpaper_file:file { getattr read write };
+
+# Write to /data/anr/traces.txt.
+allow webad anr_data_file:dir search;
+allow webad anr_data_file:file { open append };
+
+# Allow apps to send dump information to dumpstate
+allow webad dumpstate:fd use;
+allow webad dumpstate:unix_stream_socket { read write getopt getattr shutdown };
+allow webad shell_data_file:file { write getattr };
+
+# Write to /proc/net/xt_qtaguid/ctrl file.
+allow webad qtaguid_proc:file rw_file_perms;
+# Everybody can read the xt_qtaguid resource tracking misc dev.
+# So allow all apps to read from /dev/xt_qtaguid.
+allow webad qtaguid_device:chr_file r_file_perms;
+
+# Grant GPU access to all processes started by Zygote.
+# They need that to render the standard UI.
+allow webad gpu_device:chr_file { rw_file_perms execute };
+
+# Use the Binder.
+binder_use(webad)
+# Perform binder IPC to binder services.
+binder_call(webad, binderservicedomain)
+# Perform binder IPC to other apps.
+binder_call(webad, appdomain)
+
+# Already connected, unnamed sockets being passed over some other IPC
+# hence no sock_file or connectto permission. This appears to be how
+# Chrome works, may need to be updated as more apps using isolated services
+# are examined.
+allow webad appdomain:unix_stream_socket { getopt getattr read write shutdown };
+
+# Backup ability for every app. BMS opens and passes the fd
+# to any app that has backup ability. Hence, no open permissions here.
+allow webad backup_data_file:file { read write getattr };
+allow webad cache_backup_file:file { read write getattr };
+allow webad cache_backup_file:dir getattr;
+# Backup ability using 'adb backup'
+allow webad system_data_file:lnk_file getattr;
+
+# Allow read/stat of /data/media files passed by Binder or local socket IPC.
+allow webad media_rw_data_file:file { read getattr };
+
+# Read and write /data/data/com.android.providers.telephony files passed over Binder.
+allow webad radio_data_file:file { read write getattr };
+
+# Read and write system app data files passed over Binder.
+# Motivating case was /data/data/com.android.settings/cache/*.jpg for
+# cropping or taking user photos.
+allow webad system_app_data_file:file { read write getattr };
+
+# Access SDcard via the fuse mount.
+allow webad fuse:dir create_dir_perms;
+allow webad fuse:file create_file_perms;
+
+# Access OBBs (vfat images) mounted by vold (b/17633509)
+allow webad vfat:dir r_dir_perms;
+allow webad vfat:file r_file_perms;
+
+# Allow apps to use the USB Accessory interface.
+# http://developer.android.com/guide/topics/connectivity/usb/accessory.html
+#
+# USB devices are first opened by the system server (USBDeviceManagerService)
+# and the file descriptor is passed to the right Activity via binder.
+allow webad usb_device:chr_file { read write getattr ioctl };
+allow webad usbaccessory_device:chr_file { read write getattr };
+
+# For art.
+allow webad dalvikcache_data_file:file rw_file_perms;
+
+# /data/dalvik-cache/profiles
+allow webad dalvikcache_profiles_data_file:dir { search getattr };
+allow webad dalvikcache_profiles_data_file:file rw_file_perms;
+
+# Allow any app to read shared RELRO files.
+allow webad shared_relro_file:dir search;
+allow webad shared_relro_file:file r_file_perms;
+
+# Allow apps to read/execute installed binaries
+allow webad apk_data_file:dir r_dir_perms;
+
+# /data/resource-cache
+allow webad resourcecache_data_file:file r_file_perms;
+allow webad resourcecache_data_file:dir r_dir_perms;
+
+###
+### CTS-specific rules
+###
+
+# For cts/tools/device-setup/TestDeviceSetup/src/android/tests/getinfo/RootProcessScanner.java.
+# Reads /proc/pid/status and statm entries to check that
+# no unexpected root processes are running.
+# Also for cts/tests/tests/security/src/android/security/cts/VoldExploitTest.java
+# Reads /proc/pid/cmdline of vold.
+allow webad domain:dir { open read search getattr };
+allow webad domain:{ file lnk_file } { open read getattr };
+
+# For cts/tests/tests/permission/src/android/permission/cts/FileSystemPermissionTest.java.
+# testRunAsHasCorrectCapabilities
+allow webad runas_exec:file getattr;
+# Others are either allowed elsewhere or not desired.
+
+# For cts/tests/tests/security/src/android/security/cts/SELinuxTest.java
+# Check SELinux policy and contexts.
+selinux_check_access(webad)
+selinux_check_context(webad)
+# Validate that each process is running in the correct security context.
+allow webad domain:process getattr;
+
+
+# application inherit logd write socket (urge is to deprecate this long term)
+allow webad zygote:unix_dgram_socket write;
+
+allow webad keystore:keystore_key { test get insert delete exist saw sign verify };
+
+use_keystore(webad)

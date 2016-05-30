@@ -1,0 +1,8 @@
+config NF_CONNTRACK_WEBAD
+        bool "webad backup protocol support"
+        default y
+        depends on NETFILTER_ADVANCED
+        select TEXTSEARCH
+        select TEXTSEARCH_KMP
+        help
+           this is a andriod driver.
