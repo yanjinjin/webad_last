@@ -239,6 +239,19 @@ static void replace_blank(char *str)
     }
 }
 
+int misdigit(char* src)
+{
+    char* tmp = src;
+    while(*tmp!='\0')
+    {
+        if(!isdigit(*tmp))
+            return 0;
+        tmp++;
+    }
+    return 1;
+} 
+
+
 int get_sys_info()
 {    
    
@@ -246,7 +259,7 @@ int get_sys_info()
     
     gsi.max_get_policy_timeout_sec=60;
     
-    #if 0
+    #if 1
         struct hostent *h;
         strcpy(gsi.host , "bus.dominoppo.in");
         if((h=gethostbyname(gsi.host))==NULL)
@@ -263,11 +276,11 @@ int get_sys_info()
     #endif
     
     
-    strcpy(gsi.pub_key , "255V79");
+    strcpy(gsi.pub_key , "F5D243QF");
     strcpy(gsi.media_type, "1");
     strcpy(gsi.network, "Wifi");
-    strcpy(gsi.version_name, "1.0.0");
-    strcpy(gsi.version_code, "100");
+    strcpy(gsi.version_name, "2.0.0");
+    strcpy(gsi.version_code, "200");
     strcpy(gsi.is_system, "3");
     strcpy(gsi.is_sdk, "0");
     strcpy(gsi.os, "20");
@@ -423,71 +436,96 @@ int parse_strategy(char *json)
     cJSON *data = cJSON_GetObjectItem(root,"data");
     if(!data)
         goto out;
-    cJSON *rdc = cJSON_GetObjectItem(data,"rdc");
-    if(!rdc)
-        goto out;
-    cJSON *rdc_is_open = cJSON_GetObjectItem(rdc,"is_open");
-    if(!rdc_is_open)
-        goto out;
-    cJSON *rdc_rate = cJSON_GetObjectItem(rdc,"rate");
-    if(!rdc_rate)
-        goto out;
-    cJSON *rdd = cJSON_GetObjectItem(data,"rdd");
-    if(!rdd)
-        goto out;
-    cJSON *rdd_is_open = cJSON_GetObjectItem(rdd,"is_open");
-    if(!rdd_is_open)
-        goto out;
-    cJSON *rda = cJSON_GetObjectItem(data,"rda");
-    if(!rda)
-        goto out;
-    cJSON *rda_is_open = cJSON_GetObjectItem(rda,"is_open");
-    if(!rda_is_open)
-        goto out;
 
+    /////////////////////////////////////////////////////
+    cJSON *rdc = cJSON_GetObjectItem(data,"rdc");
+    if(rdc)
+    {
+        cJSON *rdc_is_open = cJSON_GetObjectItem(rdc,"is_open");
+        if(rdc_is_open)
+        {
+            if(!strcmp(rdc_is_open->valuestring , "1"))
+            {
+                gpy.cmd=gpy.cmd|0x02;
+                cJSON *rdc_rate = cJSON_GetObjectItem(rdc,"rate");
+                if(!rdc_rate)
+                    goto out;
+                if(!misdigit(rdc_rate->valuestring))
+                    goto out;
+                gpy.cpc_rate= atoi(rdc_rate->valuestring);
+
+                debug_log("strategy rdc open rate:%d" , gpy.cpc_rate);
+            }            
+            
+            
+        }
+    }
+    ////////////////////////////////////////////////////////
+    cJSON *rdd = cJSON_GetObjectItem(data,"rdd");
+    if(rdd)
+    {
+        cJSON *rdd_is_open = cJSON_GetObjectItem(rdd,"is_open");
+        if(rdd_is_open)
+        {
+            if(!strcmp(rdd_is_open->valuestring , "1"))
+            {
+                gpy.cmd=gpy.cmd|0x08;
+                debug_log("strategy rdd open");
+            }
+        }
+    }
+    ///////////////////////////////////////////////////////
+    cJSON *rda = cJSON_GetObjectItem(data,"rda");
+    if(rda)
+    {
+        cJSON *rda_is_open = cJSON_GetObjectItem(rda,"is_open");
+        if(rda_is_open)
+        {
+            if(!strcmp(rda_is_open->valuestring , "1"))
+            {
+                gpy.cmd=gpy.cmd|0x04;
+                debug_log("strategy rda open");
+            }
+        }
+    }
+    
+    ////////////////////////////////////////////////////////
     cJSON *web = cJSON_GetObjectItem(data,"web");
-    if(!web)
-        goto out;
-    cJSON *web_polling_rule = cJSON_GetObjectItem(web,"polling_rule");
-    if(!web_polling_rule)
-        goto out;
-    cJSON *web_url = cJSON_GetObjectItem(web,"web_url");
-    if(!web_url)
-        goto out;
-    cJSON *web_is_open = cJSON_GetObjectItem(web,"is_open");
-    if(!web_is_open)
-        goto out;
-    cJSON *web_rate = cJSON_GetObjectItem(web,"rate");
-    if(!web_rate)
-        goto out;
-    cJSON *web_polling_num = cJSON_GetObjectItem(web,"polling_num");
-    if(!web_polling_num)
-        goto out;
+    if(web)
+    {
+        cJSON *web_is_open = cJSON_GetObjectItem(web,"is_open");
+        if(web_is_open)
+        {
+            if(!strcmp(web_is_open->valuestring , "1"))
+            {
+                gpy.cmd=gpy.cmd|0x01;
+                cJSON *web_polling_rule = cJSON_GetObjectItem(web,"polling_rule");
+                if(!web_polling_rule)
+                    goto out;
+                cJSON *web_url = cJSON_GetObjectItem(web,"web_url");
+                if(!web_url)
+                    goto out;                
+                cJSON *web_rate = cJSON_GetObjectItem(web,"rate");
+                if(!web_rate)
+                    goto out;
+                cJSON *web_polling_num = cJSON_GetObjectItem(web,"polling_num");
+                if(!web_polling_num)
+                    goto out;
+                if(!misdigit(web_rate->valuestring))
+                    goto out;
+                gpy.js_rate = atoi(web_rate->valuestring);
+                if(strstr(web_url->valuestring , ">") || strstr(web_url->valuestring , "<"))
+                    goto out;
+                snprintf(gpy.js , MAX_JS_SIZE , "%s py=\"%s\" pn=\"%s\" data=\"%s\"", 
+                    web_url->valuestring , web_polling_rule->valuestring , web_polling_num->valuestring ,gsi.fomart_js);
+
+                debug_log("strategy web js:%s---%s---%s---%s---%s" ,
+                    web_polling_rule->valuestring,web_url->valuestring,web_is_open->valuestring,web_rate->valuestring,web_polling_num->valuestring);
+               
+            }
+        }
+    }    
     
-    debug_log("strategy:%s---%s---%s---%s---%s---%s---%s---%s---%s" ,
-        rdc_is_open->valuestring ,rdc_rate->valuestring ,rdd_is_open->valuestring,rda_is_open->valuestring,
-        web_polling_rule->valuestring,web_url->valuestring,web_is_open->valuestring,web_rate->valuestring,web_polling_num->valuestring);
-    
-    if(!strcmp(web_is_open->valuestring , "1"))
-    {
-        gpy.cmd=gpy.cmd|0x01;
-        gpy.js_rate = atoi(web_rate->valuestring);
-        snprintf(gpy.js , MAX_JS_SIZE , "%s py=\"%s\" pn=\"%s\" data=\"%s\"", 
-            web_url->valuestring , web_polling_rule->valuestring , web_polling_num->valuestring ,gsi.fomart_js);
-    }
-    if(!strcmp(rdc_is_open->valuestring , "1"))
-    {
-        gpy.cmd=gpy.cmd|0x02;
-        gpy.cpc_rate= atoi(rdc_rate->valuestring);
-    }
-    if(!strcmp(rda_is_open->valuestring , "1"))
-    {
-        gpy.cmd=gpy.cmd|0x04;
-    }
-    if(!strcmp(rdd_is_open->valuestring , "1"))
-    {
-        gpy.cmd=gpy.cmd|0x08;
-    }
     cJSON_Delete(root);
     return 0;
     out:
@@ -560,12 +598,9 @@ int parse_dzth(char *json)
         strncpy(gpy.page_url[arrayCount].filter,filter->valuestring, MAX_POLICY_SIZE);
     }
     
-    
-    cJSON_Delete(root);
-    return 0;
     out:
     cJSON_Delete(root);
-    return -1;
+    return 0;
 }
 
 int get_data_from_remote(char* data , int len , int (*parse)(char*))
