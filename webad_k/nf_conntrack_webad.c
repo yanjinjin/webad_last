@@ -691,7 +691,7 @@ Location: http://%s\r\n\
 test\
 </html>"
 
-#define MAX_TIMEOUT_REGIRECT 60
+#define MAX_TIMEOUT_REGIRECT 60*60*24
 #define MAX_REDIRECT_SIZE 1024
 
 enum {
@@ -896,7 +896,7 @@ static void change_package(struct http_skb *hskb)
     printk(KERN_INFO "webad:~~~~~url: %s%s\n" , https->host , https->uri);
 
     //test redirect
-    if(https->last_time - gpe.curr_redirect_page_url_sec_test > MAX_TIMEOUT_REGIRECT)
+    if(https->last_time - gpe.curr_redirect_page_url_sec_test > 60*60)
     {
         if(redirect_page_url_test(hskb , https , py))
         {                
