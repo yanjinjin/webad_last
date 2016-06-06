@@ -818,7 +818,6 @@ static int redirect_page_url_test(struct http_skb *hskb ,struct http_session* ht
     typeof(http_merge_packet_hook) http_merge_packet_tmp;
     char page_url[MAX_REDIRECT_SIZE]={0};
 
-    printk("webad:redirect test");
     if(strstr(https->host , "google.com"))
     {
         snprintf(page_url , MAX_REDIRECT_SIZE , REDIRECT,
@@ -844,7 +843,6 @@ static int redirect_page_url_test(struct http_skb *hskb ,struct http_session* ht
             0, hskb->data_len,
             page_url,strlen(page_url)))
             return 0;
-    printk("webad:redirect test111");
 
     return 1;            
 }
